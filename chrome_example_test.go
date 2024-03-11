@@ -3,6 +3,7 @@ package kooky_test
 import (
 	"fmt"
 	"os"
+	"testing"
 
 	"github.com/dvgamerr-app/go-kooky/browser/chrome"
 )
@@ -10,7 +11,7 @@ import (
 // on macOS:
 var cookieStorePath = "/Google/Chrome/Default/Cookies"
 
-func Example_chromeSimpleMacOS() {
+func TestChromeSimpleMacOS(t *testing.T) {
 	// construct file path for the sqlite database containing the cookies
 	dir, _ := os.UserConfigDir() // on macOS: "/<USER>/Library/Application Support/"
 	cookieStoreFile := dir + cookieStorePath

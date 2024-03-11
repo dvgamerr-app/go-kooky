@@ -2,12 +2,13 @@ package kooky_test
 
 import (
 	"fmt"
+	"testing"
 
 	"github.com/dvgamerr-app/go-kooky"
 	_ "github.com/dvgamerr-app/go-kooky/browser/all" // register cookiestore finders
 )
 
-func ExampleFindAllCookieStores() {
+func TestFindAllCookieStores(t *testing.T) {
 	cookieStores := kooky.FindAllCookieStores()
 
 	for _, store := range cookieStores {

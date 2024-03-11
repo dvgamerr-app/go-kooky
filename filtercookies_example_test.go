@@ -1,16 +1,18 @@
 package kooky_test
 
 import (
+	"testing"
+
 	"github.com/dvgamerr-app/go-kooky"
 	_ "github.com/dvgamerr-app/go-kooky/browser/all" // register cookiestore finders
 )
 
 var cookieName = `NID`
 
-func ExampleFilterCookies() {
+func TestFilterCookies(t *testing.T) {
 	cookies := kooky.ReadCookies() // automatic read
 
-	cookies = kooky.FilterCookies(
+	kooky.FilterCookies(
 		cookies,
 		kooky.Valid,                    // remove expired cookies
 		kooky.DomainContains(`google`), // cookie domain has to contain "google"

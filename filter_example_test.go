@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+	"testing"
 
 	"github.com/dvgamerr-app/go-kooky"
 )
@@ -11,7 +12,7 @@ import (
 // example regex matching base64 strings
 var reBase64 = regexp.MustCompile(`^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{4})$`)
 
-func ExampleFilter_regex() {
+func TestFilter_regex(t *testing.T) {
 	var cookies = []*kooky.Cookie{{Cookie: http.Cookie{Name: `test`, Value: `dGVzdA==`}}}
 
 	cookies = kooky.FilterCookies(
