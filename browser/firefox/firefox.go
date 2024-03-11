@@ -3,9 +3,9 @@ package firefox
 import (
 	"net/http"
 
-	"github.com/browserutils/kooky"
-	"github.com/browserutils/kooky/internal/cookies"
-	"github.com/browserutils/kooky/internal/firefox"
+	"github.com/dvgamerr-app/go-kooky"
+	"github.com/dvgamerr-app/go-kooky/internal/cookies"
+	"github.com/dvgamerr-app/go-kooky/internal/firefox"
 )
 
 func ReadCookies(filename string, filters ...kooky.Filter) ([]*kooky.Cookie, error) {

@@ -4,9 +4,9 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/browserutils/kooky"
-	"github.com/browserutils/kooky/internal/cookies"
-	"github.com/browserutils/kooky/internal/ie"
+	"github.com/dvgamerr-app/go-kooky"
+	"github.com/dvgamerr-app/go-kooky/internal/cookies"
+	"github.com/dvgamerr-app/go-kooky/internal/ie"
 )
 
 func ReadCookies(filename string, filters ...kooky.Filter) ([]*kooky.Cookie, error) {

@@ -5,7 +5,7 @@ import (
 
 	"github.com/go-sqlite/sqlite3"
 
-	"github.com/browserutils/kooky/internal/cookies"
+	"github.com/dvgamerr-app/go-kooky/internal/cookies"
 )
 
 type CookieStore struct {

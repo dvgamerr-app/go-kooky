@@ -3,9 +3,9 @@ package opera
 import (
 	"path/filepath"
 
-	"github.com/browserutils/kooky"
-	"github.com/browserutils/kooky/internal/chrome"
-	"github.com/browserutils/kooky/internal/cookies"
+	"github.com/dvgamerr-app/go-kooky"
+	"github.com/dvgamerr-app/go-kooky/internal/chrome"
+	"github.com/dvgamerr-app/go-kooky/internal/cookies"
 )
 
 type operaFinder struct{}

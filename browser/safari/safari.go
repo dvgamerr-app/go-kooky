@@ -12,9 +12,9 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/browserutils/kooky"
-	"github.com/browserutils/kooky/internal/cookies"
-	"github.com/browserutils/kooky/internal/timex"
+	"github.com/dvgamerr-app/go-kooky"
+	"github.com/dvgamerr-app/go-kooky/internal/cookies"
+	"github.com/dvgamerr-app/go-kooky/internal/timex"
 )
 
 type fileHeader struct {

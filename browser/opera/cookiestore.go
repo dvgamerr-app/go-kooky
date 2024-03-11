@@ -5,7 +5,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/browserutils/kooky/internal/cookies"
+	"github.com/dvgamerr-app/go-kooky/internal/cookies"
 )
 
 type operaCookieStore struct {

@@ -1,8 +1,8 @@
 # kooky
 
-[![PkgGoDev](https://pkg.go.dev/badge/github.com/browserutils/kooky)](https://pkg.go.dev/github.com/browserutils/kooky)
-[![Go Report Card](https://goreportcard.com/badge/zellyn/kooky)](https://goreportcard.com/report/zellyn/kooky)
-![Lines of code](https://img.shields.io/tokei/lines/github/zellyn/kooky)
+[![PkgGoDev](https://pkg.go.dev/badge/github.com/dvgamerr-app/go-kooky)](https://pkg.go.dev/github.com/dvgamerr-app/go-kooky)
+[![Go Report Card](https://goreportcard.com/badge/dvgamerr-app/go-kooky)](https://goreportcard.com/report/dvgamerr-app/go-kooky)
+![Lines of code](https://img.shields.io/tokei/lines/github/dvgamerr-app/go-kooky)
 [![No Maintenance Intended](http://unmaintained.tech/badge.svg)](http://unmaintained.tech/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
 [![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](https://lbesson.mit-license.org/)
@@ -49,8 +49,8 @@ package main
 import (
 	"fmt"
 
-	"github.com/browserutils/kooky"
-	_ "github.com/browserutils/kooky/browser/all" // register cookie store finders!
+	"github.com/dvgamerr-app/go-kooky"
+	_ "github.com/dvgamerr-app/go-kooky/browser/all" // register cookie store finders!
 )
 
 func main() {
@@ -74,7 +74,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/browserutils/kooky/browser/chrome"
+	"github.com/dvgamerr-app/go-kooky/browser/chrome"
 )
 
 func main() {
@@ -100,7 +100,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/browserutils/kooky/browser/safari"
+	"github.com/dvgamerr-app/go-kooky/browser/safari"
 )
 
 func main() {

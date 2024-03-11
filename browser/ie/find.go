@@ -1,10 +1,10 @@
 package ie
 
 import (
-	"github.com/browserutils/kooky"
-	"github.com/browserutils/kooky/internal/cookies"
-	"github.com/browserutils/kooky/internal/ie"
-	_ "github.com/browserutils/kooky/internal/ie/find"
+	"github.com/dvgamerr-app/go-kooky"
+	"github.com/dvgamerr-app/go-kooky/internal/cookies"
+	"github.com/dvgamerr-app/go-kooky/internal/ie"
+	_ "github.com/dvgamerr-app/go-kooky/internal/ie/find"
 )
 
 type ieFinder struct{}

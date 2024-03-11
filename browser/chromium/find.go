@@ -1,10 +1,10 @@
 package chromium
 
 import (
-	"github.com/browserutils/kooky"
-	"github.com/browserutils/kooky/internal/chrome"
-	"github.com/browserutils/kooky/internal/chrome/find"
-	"github.com/browserutils/kooky/internal/cookies"
+	"github.com/dvgamerr-app/go-kooky"
+	"github.com/dvgamerr-app/go-kooky/internal/chrome"
+	"github.com/dvgamerr-app/go-kooky/internal/chrome/find"
+	"github.com/dvgamerr-app/go-kooky/internal/cookies"
 )
 
 type chromiumFinder struct{}

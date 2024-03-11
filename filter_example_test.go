@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"regexp"
 
-	"github.com/browserutils/kooky"
+	"github.com/dvgamerr-app/go-kooky"
 )
 
 // example regex matching base64 strings

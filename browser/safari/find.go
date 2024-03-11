@@ -3,8 +3,8 @@
 package safari
 
 import (
-	"github.com/browserutils/kooky"
-	"github.com/browserutils/kooky/internal/cookies"
+	"github.com/dvgamerr-app/go-kooky"
+	"github.com/dvgamerr-app/go-kooky/internal/cookies"
 )
 
 type safariFinder struct{}
