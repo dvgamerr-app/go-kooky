@@ -19,7 +19,7 @@ func VisitTableRows(db *sqlite3.DbFile, tableName string, columnNameMappings map
 			}
 		}
 	} else {
-		return fmt.Errorf("Unable to find table named [%s] in %v", tableName, db)
+		return fmt.Errorf("unable to find table named [%s] in %v", tableName, db)
 	}
 	return db.VisitTableRecords(tableName, func(rowID *int64, record sqlite3.Record) error {
 		return f(rowID, TableRow{columns, &record})

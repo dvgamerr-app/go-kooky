@@ -18,12 +18,6 @@ type fileHeader struct {
 	LengthLength      uint16
 }
 
-type record struct {
-	TagIDType         any
-	PayloadLengthType any
-	Payload           []byte
-}
-
 // "cookies4.dat" format
 func (s *operaPrestoCookieStore) ReadCookies(filters ...kooky.Filter) ([]*kooky.Cookie, error) {
 	if s == nil {
@@ -202,31 +196,31 @@ func toUint32(b []byte) uint32 {
 }
 
 const (
-	tagIDDomainStart                         uint32 = 0x01 // struct
-	tagIDDomainEnd                           uint32 = 0x04 // --
-	tagIDPathStart                           uint32 = 0x02 // struct
-	tagIDPathEnd                             uint32 = 0x05 // --
-	tagIDCookie                              uint32 = 0x03 // struct
-	tagIDDomainName                          uint32 = 0x1e // string
-	tagIDDomainFilter                        uint32 = 0x1f // int8
-	tagIDDomainPathFilter                    uint32 = 0x21 // int8
-	tagIDDomain3rdPartyFilter                uint32 = 0x25 // int8
-	tagIDPathName                            uint32 = 0x1d // string
-	tagIDCookieName                          uint32 = 0x10 // string
-	tagIDCookieValue                         uint32 = 0x11 // string
-	tagIDCookieDateExpiry                    uint32 = 0x12 // time_t
-	tagIDCookieDateLastUsed                  uint32 = 0x13 // time_t
-	tagIDCookieRFC2965Comment                uint32 = 0x14 // string
-	tagIDCookieRFC2965CommentURL             uint32 = 0x15 // string
-	tagIDCookieRFC2965CommentVersion1Domain  uint32 = 0x16 // string
-	tagIDCookieRFC2965CommentVersion1Path    uint32 = 0x17 // string
-	tagIDCookieRFC2965CommentVersion1PortLim uint32 = 0x18 // string
-	tagIDCookieHTTPSOnly                     uint32 = 0x19 // flag
-	tagIDCookieRFC2965Version                uint32 = 0x1a // int8+
-	tagIDCookieOnlyToSource                  uint32 = 0x1b // flag
-	tagIDCookieDeleteProtection              uint32 = 0x1c // flag - never implemented by Opera
-	tagIDCookiePathPrefixFilter              uint32 = 0x20 // flag
-	tagIDCookiePasswordLogin                 uint32 = 0x22 // flag
-	tagIDCookieHTTPAuth                      uint32 = 0x23 // flag
-	tagIDCookie3rdParty                      uint32 = 0x24 // flag
+	tagIDDomainStart      uint32 = 0x01 // struct
+	tagIDDomainEnd        uint32 = 0x04 // --
+	tagIDPathStart        uint32 = 0x02 // struct
+	tagIDPathEnd          uint32 = 0x05 // --
+	tagIDCookie           uint32 = 0x03 // struct
+	tagIDDomainName       uint32 = 0x1e // string
+	tagIDPathName         uint32 = 0x1d // string
+	tagIDCookieName       uint32 = 0x10 // string
+	tagIDCookieValue      uint32 = 0x11 // string
+	tagIDCookieDateExpiry uint32 = 0x12 // time_t
+	tagIDCookieHTTPSOnly  uint32 = 0x19 // flag
+	// tagIDDomainFilter         uint32 = 0x1f // int8
+	// tagIDDomainPathFilter     uint32 = 0x21 // int8
+	// tagIDDomain3rdPartyFilter uint32 = 0x25 // int8
+	// tagIDCookieDateLastUsed                  uint32 = 0x13 // time_t
+	// tagIDCookieRFC2965Comment                uint32 = 0x14 // string
+	// tagIDCookieRFC2965CommentURL             uint32 = 0x15 // string
+	// tagIDCookieRFC2965CommentVersion1Domain  uint32 = 0x16 // string
+	// tagIDCookieRFC2965CommentVersion1Path    uint32 = 0x17 // string
+	// tagIDCookieRFC2965CommentVersion1PortLim uint32 = 0x18 // string
+	// tagIDCookieRFC2965Version                uint32 = 0x1a // int8+
+	// tagIDCookieOnlyToSource                  uint32 = 0x1b // flag
+	// tagIDCookieDeleteProtection              uint32 = 0x1c // flag - never implemented by Opera
+	// tagIDCookiePathPrefixFilter              uint32 = 0x20 // flag
+	// tagIDCookiePasswordLogin                 uint32 = 0x22 // flag
+	// tagIDCookieHTTPAuth                      uint32 = 0x23 // flag
+	// tagIDCookie3rdParty                      uint32 = 0x24 // flag
 )
