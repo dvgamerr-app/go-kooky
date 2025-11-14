@@ -1,30 +1,40 @@
 package kooky_test
 
 import (
-	"fmt"
 	"os"
 	"testing"
 
+	"github.com/dvgamerr-app/go-kooky"
 	"github.com/dvgamerr-app/go-kooky/browser/chrome"
+	"github.com/stretchr/testify/assert"
 )
 
 // on macOS:
-var cookieStorePath = "/Google/Chrome/Default/Cookies"
+var cookieStoreMacOs = "/Google/Chrome/Default/Cookies"
+var cookieStoreWindows = "\\..\\Local\\Google\\Chrome\\User Data\\Default\\Network\\Cookies"
 
-func TestChromeSimpleMacOS(t *testing.T) {
+func TestChromeOnLocal(t *testing.T) {
 	// construct file path for the sqlite database containing the cookies
 	dir, _ := os.UserConfigDir() // on macOS: "/<USER>/Library/Application Support/"
-	cookieStoreFile := dir + cookieStorePath
+	var cookieStoreFile string
+	if os := os.Getenv("OS"); os == "Darwin" {
+		cookieStoreFile = dir + cookieStoreMacOs
+	} else {
+		cookieStoreFile = dir + cookieStoreWindows
+	}
 
-	// read the cookies from the file
-	// decryption is handled automatically
+	t.Logf("Cookies: %s", cookieStoreFile)
 	cookies, err := chrome.ReadCookies(cookieStoreFile)
-	if err != nil {
-		// TODO: handle the error
-		return
+	assert.Nilf(t, err, "failed to read cookies: %v")
+
+	for i, cookie := range cookies {
+		t.Logf("%+v", cookie)
+
+		if i > 3 {
+			break
+		}
 	}
 
-	for _, cookie := range cookies {
-		fmt.Println(cookie)
-	}
+	cookies = kooky.FilterCookies(cookies, kooky.DomainContains("google"))
+	assert.GreaterOrEqual(t, len(cookies), 1)
 }

@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"runtime"
+	"strings"
 	"sync"
 
 	"golang.org/x/crypto/pbkdf2"
@@ -82,6 +83,8 @@ func (s *CookieStore) ReadCookies(filters ...kooky.Filter) ([]*kooky.Cookie, err
 		} else if len(encrypted_value) > 0 {
 			if decrypted, err := s.decrypt(encrypted_value); err == nil {
 				cookie.Value = string(decrypted)
+			} else if strings.Contains(err.Error(), "unknown encryption method") {
+				cookie.Value = string(encrypted_value)
 			} else {
 				return fmt.Errorf("decrypting cookie %v: %w", cookie, err)
 			}
@@ -189,6 +192,11 @@ func (s *CookieStore) decrypt(encrypted []byte) ([]byte, error) {
 				decrypt = func(encrypted, _ []byte) ([]byte, error) {
 					return decryptDPAPI(encrypted)
 				}
+			case bytes.HasPrefix(encrypted, []byte(`v11`)):
+				needsKeyringQuerying = true
+				decrypt = func(encrypted, password []byte) ([]byte, error) {
+					return decryptAESCBC(encrypted, password, aescbcIterationsWindows)
+				}
 			case bytes.HasPrefix(encrypted, []byte(`v10`)):
 				fallthrough
 			default:
@@ -255,11 +263,12 @@ func (s *CookieStore) decrypt(encrypted []byte) ([]byte, error) {
 }
 
 const (
-	aescbcSalt            = `saltysalt`
-	aescbcIV              = `                `
-	aescbcIterationsLinux = 1
-	aescbcIterationsMacOS = 1003
-	aescbcLength          = 16
+	aescbcSalt              = `saltysalt`
+	aescbcIV                = `                `
+	aescbcIterationsLinux   = 1
+	aescbcIterationsMacOS   = 1003
+	aescbcIterationsWindows = 1
+	aescbcLength            = 16
 )
 
 func decryptAESCBC(encrypted, password []byte, iterations int) ([]byte, error) {
