@@ -1,4 +1,5 @@
 # kooky
+This project is a fork of [kooky](https://github.com/browserutils/kooky) with additional improvements and modifications.
 
 [![PkgGoDev](https://pkg.go.dev/badge/github.com/dvgamerr-app/go-kooky)](https://pkg.go.dev/github.com/dvgamerr-app/go-kooky)
 [![Go Report Card](https://goreportcard.com/badge/dvgamerr-app/go-kooky)](https://goreportcard.com/report/dvgamerr-app/go-kooky)

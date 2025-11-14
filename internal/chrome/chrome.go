@@ -274,6 +274,11 @@ func decryptAESCBC(encrypted, password []byte, iterations int) ([]byte, error) {
 	// strip "v##"
 	encrypted = encrypted[3:]
 
+	// CBC decryption requires input to be a multiple of block size
+	if len(encrypted)%aescbcLength != 0 {
+		return nil, fmt.Errorf("encrypted data length (%d) is not a multiple of block size %d", len(encrypted), aescbcLength)
+	}
+
 	key := pbkdf2.Key(password, []byte(aescbcSalt), iterations, aescbcLength, sha1.New)
 	block, err := aes.NewCipher(key)
 	if err != nil {
