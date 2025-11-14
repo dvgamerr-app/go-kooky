@@ -30,6 +30,7 @@ func (f *chromeFinder) FindCookieStores() ([]kooky.CookieStore, error) {
 					DefaultCookieStore: cookies.DefaultCookieStore{
 						BrowserStr:           file.Browser,
 						ProfileStr:           file.Profile,
+						ProfileDirStr:        file.ProfileDir,
 						OSStr:                file.OS,
 						IsDefaultProfileBool: file.IsDefaultProfile,
 						FileNameStr:          file.Path,

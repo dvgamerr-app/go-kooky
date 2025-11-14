@@ -52,8 +52,18 @@ func main() {
 		if browser != nil && len(*browser) > 0 && store.Browser() != *browser {
 			continue
 		}
-		if profile != nil && len(*profile) > 0 && store.Profile() != *profile {
-			continue
+		if profile != nil && len(*profile) > 0 {
+			// Check both profile name and profile directory
+			profileMatches := store.Profile() == *profile
+			// Try to get ProfileDir if available
+			if !profileMatches {
+				if cs, ok := store.(interface{ ProfileDir() string }); ok {
+					profileMatches = cs.ProfileDir() == *profile
+				}
+			}
+			if !profileMatches {
+				continue
+			}
 		}
 		if defaultProfile != nil && *defaultProfile && !store.IsDefaultProfile() {
 			continue
@@ -71,13 +81,12 @@ func main() {
 			filters = append(filters, kooky.Name(*name))
 		}
 
-		cookies, _ := store.ReadCookies(filters...)
-		/*fmt.Println(store.FilePath()) // TODO rm
 		cookies, err := store.ReadCookies(filters...)
 		if err != nil {
-			fmt.Println(err)
-		}*/
-		// continue // TODO rm
+			log.Printf("ERROR: Cannot read cookies from %s (%s - %s): %v\n",
+				store.FilePath(), store.Browser(), store.Profile(), err)
+			continue
+		}
 
 		if export != nil && len(*export) > 0 {
 			cookiesExport = append(cookiesExport, cookies...)

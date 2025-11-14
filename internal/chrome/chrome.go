@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"runtime"
-	"strings"
 	"sync"
 
 	"golang.org/x/crypto/pbkdf2"
@@ -83,10 +82,9 @@ func (s *CookieStore) ReadCookies(filters ...kooky.Filter) ([]*kooky.Cookie, err
 		} else if len(encrypted_value) > 0 {
 			if decrypted, err := s.decrypt(encrypted_value); err == nil {
 				cookie.Value = string(decrypted)
-			} else if strings.Contains(err.Error(), "unknown encryption method") {
-				cookie.Value = string(encrypted_value)
 			} else {
-				return fmt.Errorf("decrypting cookie %v: %w", cookie, err)
+				// Log decryption errors for debugging
+				return fmt.Errorf("decrypting cookie %s from %s: %w", cookie.Name, cookie.Domain, err)
 			}
 		} else {
 			cookie.Value, err = row.String(`value`)
@@ -153,6 +151,12 @@ func (s *CookieStore) decrypt(encrypted []byte) ([]byte, error) {
 		return nil, fmt.Errorf(`encrypted value is too short (%d<=3)`, len(encrypted))
 	}
 
+	// Debug: log encryption prefix
+	prefix := string(encrypted[:3])
+	if len(encrypted) >= 4 {
+		prefix = string(encrypted[:4])
+	}
+
 	// try to reuse previously successful decryption method
 	if s.DecryptionMethod != nil {
 		decrypted, err := s.DecryptionMethod(encrypted, s.PasswordBytes)
@@ -181,8 +185,8 @@ func (s *CookieStore) decrypt(encrypted []byte) ([]byte, error) {
 		// "useSavedKeyringPassword" and "tryNr" have to preserve state between retries
 		var useSavedKeyringPassword bool = true
 		var tryNr int
-	tryAgain:
 		var password, keyringPassword, fallbackPassword []byte
+	tryAgain:
 		var needsKeyringQuerying bool
 		switch opsys {
 		case `windows`:
@@ -192,6 +196,10 @@ func (s *CookieStore) decrypt(encrypted []byte) ([]byte, error) {
 				decrypt = func(encrypted, _ []byte) ([]byte, error) {
 					return decryptDPAPI(encrypted)
 				}
+			case bytes.HasPrefix(encrypted, []byte(`v20`)):
+				// Chrome v127+ uses v20 encryption
+				needsKeyringQuerying = true
+				decrypt = decryptAES256GCM
 			case bytes.HasPrefix(encrypted, []byte(`v11`)):
 				needsKeyringQuerying = true
 				decrypt = func(encrypted, password []byte) ([]byte, error) {
@@ -234,8 +242,12 @@ func (s *CookieStore) decrypt(encrypted []byte) ([]byte, error) {
 				if err == nil {
 					password = pw
 				} else {
+					// Failed to get keyring password, try fallback
 					password = fallbackPassword
-					tryNr = 2 // skip querying
+					if len(fallbackPassword) == 0 {
+						// No fallback available, skip to next try
+						tryNr = 2
+					}
 				}
 				// query keyring passwords on try #1 without simply returning saved ones
 				useSavedKeyringPassword = false
@@ -243,6 +255,8 @@ func (s *CookieStore) decrypt(encrypted []byte) ([]byte, error) {
 				password = fallbackPassword
 			}
 			tryNr++
+		} else if len(password) == 0 {
+			return nil, fmt.Errorf(`password not set (needsKeyringQuerying: %v, tryNr: %d, opsys: %s)`, needsKeyringQuerying, tryNr, opsys)
 		}
 
 		decrypted, err := decrypt(encrypted, password)
@@ -255,11 +269,16 @@ func (s *CookieStore) decrypt(encrypted []byte) ([]byte, error) {
 			}
 			return decrypted, nil
 		} else if tryNr > 0 && tryNr < 3 {
+			// Retry with different password
 			goto tryAgain
+		}
+		// Store last error for debugging
+		if err != nil && opsys == runtime.GOOS {
+			return nil, fmt.Errorf(`decryption failed for %s: %w (prefix: %q)`, opsys, err, prefix)
 		}
 	}
 
-	return nil, errors.New(`unknown encryption method`)
+	return nil, fmt.Errorf(`unknown encryption method (prefix: %q, len: %d)`, prefix, len(encrypted))
 }
 
 const (
@@ -313,24 +332,41 @@ func decryptAESCBC(encrypted, password []byte, iterations int) ([]byte, error) {
 
 func decryptAES256GCM(encrypted, password []byte) ([]byte, error) {
 	// https://stackoverflow.com/a/60423699
+	// Chrome v127+ uses v20 format with 96-bit nonce
 
-	if len(encrypted) < 3+12+16 {
-		return nil, errors.New(`encrypted value too short`)
+	var prefixLen, nonceLen int
+	if bytes.HasPrefix(encrypted, []byte(`v20`)) {
+		// v20 format: "v20" (3 bytes) + nonce (96 bits = 12 bytes) + ciphertext + tag (16 bytes)
+		prefixLen = 3
+		nonceLen = 12
+	} else if bytes.HasPrefix(encrypted, []byte(`v10`)) {
+		// v10 format: "v10" (3 bytes) + nonce (96 bits = 12 bytes) + ciphertext + tag (16 bytes)
+		prefixLen = 3
+		nonceLen = 12
+	} else {
+		return nil, errors.New(`unsupported encryption version`)
+	}
+
+	if len(encrypted) < prefixLen+nonceLen+16 {
+		return nil, fmt.Errorf(`encrypted value too short: %d bytes (need at least %d)`, len(encrypted), prefixLen+nonceLen+16)
 	}
 
 	/* encoded value consists of: {
-		"v10" (3 bytes)
+		"v10" or "v20" (3 bytes)
 		nonce (12 bytes)
 		ciphertext (variable size)
 		tag (16 bytes)
 	}
 	*/
-	nonce := encrypted[3 : 3+12]
-	ciphertextWithTag := encrypted[3+12:]
+	nonce := encrypted[prefixLen : prefixLen+nonceLen]
+	ciphertextWithTag := encrypted[prefixLen+nonceLen:]
 
+	if len(password) == 0 {
+		return nil, fmt.Errorf(`encryption password is empty (encrypted len: %d, prefix: %q)`, len(encrypted), string(encrypted[:min(len(encrypted), 10)]))
+	}
 	block, err := aes.NewCipher(password)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf(`failed to create AES cipher (key len: %d): %w`, len(password), err)
 	}
 
 	// default size for nonce and tag match

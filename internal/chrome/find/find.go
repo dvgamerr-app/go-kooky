@@ -12,6 +12,7 @@ type chromeCookieStoreFile struct {
 	Path             string
 	Browser          string
 	Profile          string
+	ProfileDir       string // folder name (e.g., "Default", "Profile 1")
 	OS               string
 	IsDefaultProfile bool
 }
@@ -55,6 +56,7 @@ func FindCookieStoreFiles(rootsFunc func() ([]string, error), browserName string
 					{
 						Browser:          browserName,
 						Profile:          `Profile 1`,
+						ProfileDir:       `Default`,
 						IsDefaultProfile: true,
 						Path:             filepath.Join(root, `Default`, `Network`, `Cookies`), // Chrome 96
 						OS:               runtime.GOOS,
@@ -62,6 +64,7 @@ func FindCookieStoreFiles(rootsFunc func() ([]string, error), browserName string
 					{
 						Browser:          browserName,
 						Profile:          `Profile 1`,
+						ProfileDir:       `Default`,
 						IsDefaultProfile: true,
 						Path:             filepath.Join(root, `Default`, `Cookies`),
 						OS:               runtime.GOOS,
@@ -78,12 +81,14 @@ func FindCookieStoreFiles(rootsFunc func() ([]string, error), browserName string
 					{
 						Browser:          browserName,
 						Profile:          profStr.Name,
+						ProfileDir:       profDir,
 						IsDefaultProfile: profStr.IsUsingDefaultName,
 						Path:             filepath.Join(root, profDir, `Network`, `Cookies`), // Chrome 96
 						OS:               runtime.GOOS,
 					}, {
 						Browser:          browserName,
 						Profile:          profStr.Name,
+						ProfileDir:       profDir,
 						IsDefaultProfile: profStr.IsUsingDefaultName,
 						Path:             filepath.Join(root, profDir, `Cookies`),
 						OS:               runtime.GOOS,

@@ -9,6 +9,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"unsafe"
@@ -68,18 +69,20 @@ func (s *CookieStore) getKeyringPassword(useSaved bool) ([]byte, error) {
 		return nil, errors.New(`cookie store is nil`)
 	}
 	if useSaved && s.KeyringPasswordBytes != nil {
+		// Return cached password
 		return s.KeyringPasswordBytes, nil
 	}
 
 	var stateFile string
+	var err error
 	// the "Local State" json file is normally one or two directory above the "Cookies" database
 	dir := filepath.Dir(s.FileNameStr)
 	if filepath.Base(dir) == `Network` { // Chrome 96
 		dir = filepath.Dir(dir)
 	}
-	stateFile, err := filepath.Abs(filepath.Join(filepath.Dir(dir), `Local State`))
+	stateFile, err = filepath.Abs(filepath.Join(filepath.Dir(dir), `Local State`))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get absolute path for Local State: %w", err)
 	}
 
 	if useSaved {
@@ -90,7 +93,7 @@ func (s *CookieStore) getKeyringPassword(useSaved bool) ([]byte, error) {
 
 	stateBytes, err := os.ReadFile(stateFile)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to read Local State file %s: %w", stateFile, err)
 	}
 
 	var localState struct {
@@ -99,27 +102,32 @@ func (s *CookieStore) getKeyringPassword(useSaved bool) ([]byte, error) {
 		} `json:"os_crypt"`
 	}
 	if err := json.Unmarshal(stateBytes, &localState); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to parse Local State JSON: %w", err)
+	}
+
+	if localState.OSCrypt.EncryptedKey == "" {
+		return nil, errors.New("encrypted_key not found in Local State")
 	}
 
 	key, err := base64.StdEncoding.DecodeString(localState.OSCrypt.EncryptedKey)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to decode encrypted key: %w", err)
 	}
 
 	if len(key) < 5 || !bytes.HasPrefix(key, []byte(`DPAPI`)) {
-		return nil, errors.New(`not an DPAPI key`)
+		return nil, fmt.Errorf(`not a DPAPI key (len: %d, prefix: %q)`, len(key), string(key[:min(len(key), 10)]))
 	}
 	key = key[5:] // strip "DPAPI"
 	key, err = decryptDPAPI(key)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to decrypt DPAPI key: %w", err)
 	}
 	if len(key) != 32 {
-		return nil, errors.New(`master key is not 32 bytes long`)
+		return nil, fmt.Errorf(`master key is not 32 bytes long (got %d bytes)`, len(key))
 	}
 	s.KeyringPasswordBytes = key
 	keyringPasswordMap.set(stateFile, key)
 
+	// Successfully retrieved and decrypted the master key
 	return s.KeyringPasswordBytes, nil
 }

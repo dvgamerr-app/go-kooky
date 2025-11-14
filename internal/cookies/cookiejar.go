@@ -24,6 +24,16 @@ type CookieJar struct {
 	CookieStore
 }
 
+func (s *CookieJar) ProfileDir() string {
+	if s == nil || s.CookieStore == nil {
+		return ``
+	}
+	if cs, ok := s.CookieStore.(interface{ ProfileDir() string }); ok {
+		return cs.ProfileDir()
+	}
+	return ``
+}
+
 func (s *CookieJar) Cookies(u *url.URL) []*http.Cookie {
 	if s == nil || s.CookieStore == nil || s.initErr != nil {
 		return nil

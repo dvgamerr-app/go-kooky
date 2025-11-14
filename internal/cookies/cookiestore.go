@@ -29,6 +29,7 @@ type DefaultCookieStore struct {
 	File                 *os.File
 	BrowserStr           string
 	ProfileStr           string
+	ProfileDirStr        string // folder name (e.g., "Default", "Profile 1")
 	OSStr                string
 	IsDefaultProfileBool bool
 }
@@ -50,6 +51,12 @@ func (s *DefaultCookieStore) Profile() string {
 		return ``
 	}
 	return s.ProfileStr
+}
+func (s *DefaultCookieStore) ProfileDir() string {
+	if s == nil {
+		return ``
+	}
+	return s.ProfileDirStr
 }
 func (s *DefaultCookieStore) IsDefaultProfile() bool {
 	return s != nil && s.IsDefaultProfileBool
