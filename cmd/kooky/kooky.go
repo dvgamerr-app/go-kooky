@@ -3,40 +3,66 @@ package main
 import (
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"strings"
 	"text/tabwriter"
 
 	"github.com/dvgamerr-app/go-kooky"
 	_ "github.com/dvgamerr-app/go-kooky/browser/all"
+	"github.com/spf13/cobra"
 
-	"github.com/spf13/pflag"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
+)
+
+var (
+	browser        string
+	profile        string
+	defaultProfile bool
+	showExpired    bool
+	domain         string
+	name           string
+	export         string
 )
 
 func main() {
-	browser := pflag.StringP(`browser`, `b`, ``, `browser filter`)
-	profile := pflag.StringP(`profile`, `p`, ``, `profile filter`)
-	defaultProfile := pflag.BoolP(`default-profile`, `q`, false, `only default profile(s)`)
-	showExpired := pflag.BoolP(`expired`, `e`, false, `show expired cookies`)
-	domain := pflag.StringP(`domain`, `d`, ``, `cookie domain filter (partial)`)
-	name := pflag.StringP(`name`, `n`, ``, `cookie name filter (exact)`)
-	export := pflag.StringP(`export`, `o`, ``, `export cookies in netscape format`)
-	pflag.Parse()
+	// Setup zerolog
+	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 
+	var rootCmd = &cobra.Command{
+		Use:   "kooky",
+		Short: "Extract cookies from browser cookie stores",
+		Long:  `Kooky is a CLI tool to extract and export cookies from various browser cookie stores.`,
+		Run:   runKooky,
+	}
+
+	rootCmd.Flags().StringVarP(&browser, "browser", "b", "", "browser filter")
+	rootCmd.Flags().StringVarP(&profile, "profile", "p", "", "profile filter")
+	rootCmd.Flags().BoolVarP(&defaultProfile, "default-profile", "q", false, "only default profile(s)")
+	rootCmd.Flags().BoolVarP(&showExpired, "expired", "e", false, "show expired cookies")
+	rootCmd.Flags().StringVarP(&domain, "domain", "d", "", "cookie domain filter (partial)")
+	rootCmd.Flags().StringVarP(&name, "name", "n", "", "cookie name filter (exact)")
+	rootCmd.Flags().StringVarP(&export, "export", "o", "", "export cookies in netscape format")
+
+	if err := rootCmd.Execute(); err != nil {
+		log.Fatal().Err(err).Msg("Failed to execute command")
+	}
+}
+
+func runKooky(cmd *cobra.Command, args []string) {
 	cookieStores := kooky.FindAllCookieStores()
 
 	var cookiesExport []*kooky.Cookie // for netscape export
 
 	var f io.Writer         // for netscape export
 	var w *tabwriter.Writer // for printing
-	if export != nil && len(*export) > 0 {
-		if *export == `-` {
+	if len(export) > 0 {
+		if export == `-` {
 			f = os.Stdout
 		} else {
-			fl, err := os.OpenFile(*export, os.O_RDWR|os.O_CREATE, 0644)
+			fl, err := os.OpenFile(export, os.O_RDWR|os.O_CREATE, 0644)
 			if err != nil {
-				log.Fatalln(err)
+				log.Fatal().Err(err).Str("file", export).Msg("Failed to open export file")
 			}
 			defer fl.Close()
 			f = fl
@@ -48,47 +74,52 @@ func main() {
 	for _, store := range cookieStores {
 		defer store.Close()
 
+		// Skip logging if file not found
+		log.Info().
+			Str("browser", store.Browser()).
+			Str("profile", store.Profile()).
+			Msg("Read cookies")
+
 		// cookie store filters
-		if browser != nil && len(*browser) > 0 && store.Browser() != *browser {
+		if len(browser) > 0 && store.Browser() != browser {
 			continue
 		}
-		if profile != nil && len(*profile) > 0 {
+		if len(profile) > 0 {
 			// Check both profile name and profile directory
-			profileMatches := store.Profile() == *profile
+			profileMatches := store.Profile() == profile
 			// Try to get ProfileDir if available
 			if !profileMatches {
 				if cs, ok := store.(interface{ ProfileDir() string }); ok {
-					profileMatches = cs.ProfileDir() == *profile
+					profileMatches = cs.ProfileDir() == profile
 				}
 			}
 			if !profileMatches {
 				continue
 			}
 		}
-		if defaultProfile != nil && *defaultProfile && !store.IsDefaultProfile() {
+
+		if defaultProfile && !store.IsDefaultProfile() {
 			continue
 		}
 
 		// cookie filters
 		var filters []kooky.Filter
-		if showExpired == nil || !*showExpired {
+		if !showExpired {
 			filters = append(filters, kooky.Valid)
 		}
-		if domain != nil && len(*domain) > 0 {
-			filters = append(filters, kooky.DomainContains(*domain))
+		if len(domain) > 0 {
+			filters = append(filters, kooky.DomainContains(domain))
 		}
-		if name != nil && len(*name) > 0 {
-			filters = append(filters, kooky.Name(*name))
+		if len(name) > 0 {
+			filters = append(filters, kooky.Name(name))
 		}
 
 		cookies, err := store.ReadCookies(filters...)
 		if err != nil {
-			log.Printf("ERROR: Cannot read cookies from %s (%s - %s): %v\n",
-				store.FilePath(), store.Browser(), store.Profile(), err)
 			continue
 		}
 
-		if export != nil && len(*export) > 0 {
+		if len(export) > 0 {
 			cookiesExport = append(cookiesExport, cookies...)
 		} else {
 			for _, cookie := range cookies {
@@ -112,7 +143,7 @@ func main() {
 			}
 		}
 	}
-	if export != nil && len(*export) > 0 {
+	if len(export) > 0 {
 		kooky.ExportCookies(f, cookiesExport)
 	} else {
 		w.Flush()
