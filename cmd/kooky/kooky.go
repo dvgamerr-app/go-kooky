@@ -84,8 +84,9 @@ func runKooky(cmd *cobra.Command, args []string) {
 
 		log.Debug().
 			Str("browser", store.Browser()).
-			Str("profile", store.Profile()).
-			Msg("Read")
+			Str("profile", profile).
+			Msg("Selected")
+
 		if len(profile) > 0 {
 			// Check both profile name and profile directory
 			profileMatches := store.Profile() == profile
@@ -117,6 +118,7 @@ func runKooky(cmd *cobra.Command, args []string) {
 		}
 
 		cookies, err := store.ReadCookies(filters...)
+
 		if err != nil {
 			continue
 		}

@@ -79,10 +79,11 @@ func FindCookieStoreFiles(rootsFunc func() ([]string, error), browserName string
 			if profileName == "" {
 				profileName = profDir
 			}
+
 			cookiePathNetwork := filepath.Join(root, profDir, `Network`, `Cookies`)
 			cookiePath := filepath.Join(root, profDir, `Cookies`)
-			appendCookieStoreFile(&files, cookiePathNetwork, browserName, profileName, profDir, profStr.IsUsingDefaultName)
-			appendCookieStoreFile(&files, cookiePath, browserName, profileName, profDir, profStr.IsUsingDefaultName)
+			appendCookieStoreFile(&files, cookiePathNetwork, browserName, profileName, profDir, profStr.IsUsingDefaultName || profileName == "Default")
+			appendCookieStoreFile(&files, cookiePath, browserName, profileName, profDir, profStr.IsUsingDefaultName || profileName == "Default")
 		}
 	}
 	return files, nil

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/dvgamerr-app/go-kooky"
+	"github.com/rs/zerolog/log"
 )
 
 type fileHeader struct {
@@ -20,6 +21,8 @@ type fileHeader struct {
 
 // "cookies4.dat" format
 func (s *operaPrestoCookieStore) ReadCookies(filters ...kooky.Filter) ([]*kooky.Cookie, error) {
+	log.Info().Msg("ReadCookies")
+
 	if s == nil {
 		return nil, errors.New(`cookie store is nil`)
 	}

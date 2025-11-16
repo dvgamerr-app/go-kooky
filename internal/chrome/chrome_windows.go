@@ -60,6 +60,12 @@ func decryptDPAPI(data []byte) ([]byte, error) {
 	return outblob.toByteArray(), nil
 }
 
+// fileExists helper สำหรับตรวจสอบไฟล์ Local State
+func fileExists(path string) bool {
+	info, err := os.Stat(path)
+	return err == nil && !info.IsDir()
+}
+
 // requires the path of the "Local State" json file relative to the cookie store file
 // to be the same as originally
 func (s *CookieStore) getKeyringPassword(useSaved bool) ([]byte, error) {
@@ -81,8 +87,15 @@ func (s *CookieStore) getKeyringPassword(useSaved bool) ([]byte, error) {
 		dir = filepath.Dir(dir)
 	}
 	stateFile, err = filepath.Abs(filepath.Join(filepath.Dir(dir), `Local State`))
-	if err != nil {
-		return nil, fmt.Errorf("failed to get absolute path for Local State: %w", err)
+	if err != nil || !fileExists(stateFile) {
+		// Fallback for Opera Stable
+		operaStable := filepath.Join(dir, "Local State")
+		if fileExists(operaStable) {
+			stateFile = operaStable
+			// err = nil // fileExists already checked
+		} else {
+			return nil, fmt.Errorf("failed to get absolute path for Local State: %w", err)
+		}
 	}
 
 	if useSaved {
