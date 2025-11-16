@@ -9,9 +9,9 @@ import (
 
 const httpOnlyPrefix = `#HttpOnly_`
 
-// ExportCookies() export "cookies" in the Netscape format.
 //
 // curl, wget, ... use this format.
+
 func ExportCookies[T Cookie | http.Cookie](w io.Writer, cookies []*T) {
 	if len(cookies) < 1 {
 		return
@@ -46,7 +46,6 @@ func ExportCookies[T Cookie | http.Cookie](w io.Writer, cookies []*T) {
 		)
 	}
 
-	// https://github.com/golang/go/issues/45380#issuecomment-1014950980
 	switch cookiesTyp := any(cookies).(type) {
 	case []*http.Cookie:
 		for i := j; i < len(cookiesTyp); i++ {

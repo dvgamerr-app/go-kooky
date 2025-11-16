@@ -260,22 +260,24 @@ func (s *CookieStore) decrypt(encrypted []byte) ([]byte, error) {
 		}
 
 		decrypted, err := decrypt(encrypted, password)
-		if err == nil {
-			s.DecryptionMethod = decrypt
-			s.OSStr = opsys
-			s.PasswordBytes = password
-			if len(keyringPassword) > 0 {
-				s.KeyringPasswordBytes = keyringPassword
-			}
-			return decrypted, nil
-		} else if tryNr > 0 && tryNr < 3 {
+
+		// Store last error for debugging
+		if err != nil {
+			return nil, fmt.Errorf(`decryption failed for %s: %w (prefix: %q)`, opsys, err, prefix)
+		}
+
+		if tryNr > 0 && tryNr < 3 {
 			// Retry with different password
 			goto tryAgain
 		}
-		// Store last error for debugging
-		if err != nil && opsys == runtime.GOOS {
-			return nil, fmt.Errorf(`decryption failed for %s: %w (prefix: %q)`, opsys, err, prefix)
+
+		s.DecryptionMethod = decrypt
+		s.OSStr = opsys
+		s.PasswordBytes = password
+		if len(keyringPassword) > 0 {
+			s.KeyringPasswordBytes = keyringPassword
 		}
+		return decrypted, nil
 	}
 
 	return nil, fmt.Errorf(`unknown encryption method (prefix: %q, len: %d)`, prefix, len(encrypted))

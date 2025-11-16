@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/dvgamerr-app/go-kooky"
-	_ "github.com/dvgamerr-app/go-kooky/browser/all" // register cookiestore finders
 )
 
 var cookieName = `NID`

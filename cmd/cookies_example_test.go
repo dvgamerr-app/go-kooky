@@ -9,7 +9,7 @@ import (
 )
 
 func TestOnLocal(t *testing.T) {
-	// construct file path for the sqlite database containing the cookies
+
 	cookies := kooky.ReadCookies(kooky.DomainContains("google"))
 	cookies = kooky.FilterCookies(cookies, kooky.DomainContains("google"))
 

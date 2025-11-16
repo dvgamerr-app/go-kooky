@@ -5,9 +5,7 @@ import (
 	"sync"
 )
 
-// CookieStore represents a file, directory, etc containing cookies.
-//
-// Call CookieStore.Close() after using any of its methods.
+// ...existing code...
 type CookieStore interface {
 	http.CookieJar
 	SubJar(filters ...Filter) (http.CookieJar, error)
@@ -19,7 +17,7 @@ type CookieStore interface {
 	Close() error
 }
 
-// CookieStoreFinder tries to find cookie stores at default locations.
+// ...existing code...
 type CookieStoreFinder interface {
 	FindCookieStores() ([]CookieStore, error)
 }
@@ -29,10 +27,7 @@ var (
 	muFinder sync.RWMutex
 )
 
-// RegisterFinder() registers CookieStoreFinder enabling automatic finding of
-// cookie stores with FindAllCookieStores() and ReadCookies().
-//
-// RegisterFinder() is called by init() in the browser subdirectories.
+// ...existing code...
 func RegisterFinder(browser string, finder CookieStoreFinder) {
 	muFinder.Lock()
 	defer muFinder.Unlock()
@@ -41,14 +36,12 @@ func RegisterFinder(browser string, finder CookieStoreFinder) {
 	}
 }
 
-// Finders returns a map of registered CookieStoreFinders.
-// If browser names are provided, only those browsers are included.
-// If no browser names are provided, all registered finders are returned.
+// ...existing code...
 func Finders(browsers ...string) map[string]CookieStoreFinder {
 	muFinder.RLock()
 	defer muFinder.RUnlock()
 
-	// If no browsers specified, return all finders
+	// ...existing code...
 	if len(browsers) == 0 {
 		result := make(map[string]CookieStoreFinder, len(finders))
 		for k, v := range finders {
@@ -57,7 +50,7 @@ func Finders(browsers ...string) map[string]CookieStoreFinder {
 		return result
 	}
 
-	// Filter by specified browser names
+	// ...existing code...
 	result := make(map[string]CookieStoreFinder)
 	for _, browser := range browsers {
 		if finder, ok := finders[browser]; ok {
@@ -67,14 +60,7 @@ func Finders(browsers ...string) map[string]CookieStoreFinder {
 	return result
 }
 
-// FindAllCookieStores() tries to find cookie stores at default locations.
-//
-// FindAllCookieStores() requires registered CookieStoreFinders.
-//
-// Register cookie store finders for all browsers like this:
-//
-//	import _ "github.com/dvgamerr-app/go-kooky/browser/all"
-//
+// ...existing code...
 // Or only a specific browser:
 //
 //	import _ "github.com/dvgamerr-app/go-kooky/browser/chrome"

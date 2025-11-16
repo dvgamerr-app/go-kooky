@@ -45,5 +45,4 @@ func TestCookieJar(t *testing.T) {
 		break
 	}
 
-	// Output: logged in
 }

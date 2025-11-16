@@ -15,7 +15,6 @@ func TestExportCookies(t *testing.T) {
 
 	file, err := os.OpenFile(cookieFile, os.O_RDWR|os.O_CREATE, 0644)
 	if err != nil {
-		// TODO: handle error
 		return
 	}
 	defer file.Close()

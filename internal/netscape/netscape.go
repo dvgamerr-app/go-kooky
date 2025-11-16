@@ -30,9 +30,6 @@ func (s *CookieStore) ReadCookies(filters ...kooky.Filter) ([]*kooky.Cookie, err
 }
 
 func ReadCookies(file io.Reader, filters ...kooky.Filter) (c []*kooky.Cookie, strict bool, e error) {
-	// http://web.archive.org/web/20080520061150/wp.netscape.com/newsref/std/cookie_spec.html
-	// https://github.com/Rob--W/cookie-manager/blob/83c04b74b79cb7768a33c4a93fbdfd04b90fa931/cookie-manager.js#L975
-	// https://hg.python.org/cpython/file/5470dc81caf9/Lib/http/cookiejar.py#l1981
 
 	if file == nil {
 		return nil, false, errors.New(`file is nil`)
@@ -61,7 +58,6 @@ func ReadCookies(file io.Reader, filters ...kooky.Filter) (c []*kooky.Cookie, st
 				exp = e
 			}
 		} else {
-			// allow empty expiry field for uzbl's "session-cookies.txt" file
 			strict = false
 		}
 
@@ -74,9 +70,6 @@ func ReadCookies(file io.Reader, filters ...kooky.Filter) (c []*kooky.Cookie, st
 			continue
 		}
 
-		// https://github.com/curl/curl/blob/curl-7_39_0/lib/cookie.c#L644
-		// https://bugs.python.org/issue2190#msg233571
-		// also in original Netscape cookies
 		if strings.HasPrefix(sp[0], httpOnlyPrefix) {
 			cookie.Domain = sp[0][len(httpOnlyPrefix):]
 			cookie.HttpOnly = true

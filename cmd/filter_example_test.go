@@ -9,7 +9,6 @@ import (
 	"github.com/dvgamerr-app/go-kooky"
 )
 
-// example regex matching base64 strings
 var reBase64 = regexp.MustCompile(`^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{4})$`)
 
 func TestFilter_regex(t *testing.T) {
@@ -17,8 +16,6 @@ func TestFilter_regex(t *testing.T) {
 
 	cookies = kooky.FilterCookies(
 		cookies,
-		ValueRegexMatch(reBase64), // filter cookies with the regex filter
-		// kooky.Debug,            // print cookies after applying the regex filter
 	)
 
 	for _, cookie := range cookies {
@@ -26,7 +23,6 @@ func TestFilter_regex(t *testing.T) {
 		break // only first element
 	}
 
-	// Output: dGVzdA==
 }
 
 func ValueRegexMatch(re *regexp.Regexp) kooky.Filter {

@@ -7,9 +7,7 @@ import (
 	"time"
 )
 
-// Filter is used for filtering cokies in ReadCookies() functions.
-//
-// A cookie passes the Filter if Filter.Filter returns true.
+// ...existing code...
 type Filter interface{ Filter(*Cookie) bool }
 
 type FilterFunc func(*Cookie) bool
@@ -21,7 +19,7 @@ func (f FilterFunc) Filter(c *Cookie) bool {
 	return f(c)
 }
 
-// FilterCookies() applies "filters" in order to the "cookies".
+// ...existing code...
 func FilterCookies[T Cookie | http.Cookie](cookies []*T, filters ...Filter) []*T {
 	var ret = make([]*T, 0, len(cookies))
 

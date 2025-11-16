@@ -5,15 +5,14 @@ import (
 	"testing"
 
 	"github.com/dvgamerr-app/go-kooky"
-	_ "github.com/dvgamerr-app/go-kooky/browser/all" // register cookiestore finders
+	_ "github.com/dvgamerr-app/go-kooky/browser/all"
 )
 
 func TestFindAllCookieStores(t *testing.T) {
 	cookieStores := kooky.FindAllCookieStores()
 
 	for _, store := range cookieStores {
-		// CookieStore keeps files/databases open for repeated reads
-		// close those when no longer needed
+		// ...existing code...
 		defer store.Close()
 
 		var filters = []kooky.Filter{
