@@ -11,16 +11,6 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func ReadCookies(filename string, filters ...kooky.Filter) ([]*kooky.Cookie, error) {
-	s, err := cookieStore(filename)
-	if err != nil {
-		return nil, err
-	}
-	defer s.Close()
-
-	return s.ReadCookies(filters...)
-}
-
 func (s *operaCookieStore) ReadCookies(filters ...kooky.Filter) ([]*kooky.Cookie, error) {
 	if s == nil {
 		return nil, errors.New(`cookie store is nil`)

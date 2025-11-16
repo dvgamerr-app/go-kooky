@@ -120,7 +120,13 @@ func runKooky(cmd *cobra.Command, args []string) {
 		cookies, err := store.ReadCookies(filters...)
 
 		if err != nil {
+			log.Debug().Err(err).Str("browser", store.Browser()).Str("profile", store.Profile()).Msg("ReadCookies error")
 			continue
+		}
+
+		log.Debug().Str("browser", store.Browser()).Str("profile", store.Profile()).Int("cookie_count", len(cookies)).Msg("Cookies found")
+		if len(cookies) == 0 {
+			fmt.Fprintf(os.Stderr, "No cookies found for browser=%s profile=%s file=%s\n", store.Browser(), store.Profile(), store.FilePath())
 		}
 
 		if len(export) > 0 {

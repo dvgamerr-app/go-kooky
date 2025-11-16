@@ -1,12 +1,23 @@
 package opera
 
+// ReadCookies สำหรับ Opera Chromium (Blink) ใช้ logic เดียวกับ Chrome
 import (
 	"errors"
 	"io"
 	"os"
 
+	"github.com/dvgamerr-app/go-kooky"
+	"github.com/dvgamerr-app/go-kooky/internal/chrome"
 	"github.com/dvgamerr-app/go-kooky/internal/cookies"
 )
+
+func ReadCookies(filename string, filters ...kooky.Filter) ([]*kooky.Cookie, error) {
+	s := &chrome.CookieStore{}
+	s.FileNameStr = filename
+	s.BrowserStr = "opera"
+	defer s.Close()
+	return s.ReadCookies(filters...)
+}
 
 type operaCookieStore struct {
 	cookies.CookieStore
