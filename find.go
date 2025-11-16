@@ -41,6 +41,32 @@ func RegisterFinder(browser string, finder CookieStoreFinder) {
 	}
 }
 
+// Finders returns a map of registered CookieStoreFinders.
+// If browser names are provided, only those browsers are included.
+// If no browser names are provided, all registered finders are returned.
+func Finders(browsers ...string) map[string]CookieStoreFinder {
+	muFinder.RLock()
+	defer muFinder.RUnlock()
+
+	// If no browsers specified, return all finders
+	if len(browsers) == 0 {
+		result := make(map[string]CookieStoreFinder, len(finders))
+		for k, v := range finders {
+			result[k] = v
+		}
+		return result
+	}
+
+	// Filter by specified browser names
+	result := make(map[string]CookieStoreFinder)
+	for _, browser := range browsers {
+		if finder, ok := finders[browser]; ok {
+			result[browser] = finder
+		}
+	}
+	return result
+}
+
 // FindAllCookieStores() tries to find cookie stores at default locations.
 //
 // FindAllCookieStores() requires registered CookieStoreFinders.
@@ -52,11 +78,25 @@ func RegisterFinder(browser string, finder CookieStoreFinder) {
 // Or only a specific browser:
 //
 //	import _ "github.com/dvgamerr-app/go-kooky/browser/chrome"
-func FindAllCookieStores() []CookieStore {
+func FindAllCookieStores(browsers ...string) []CookieStore {
 	var ret []CookieStore
 
+	muFinder.RLock()
+	defer muFinder.RUnlock()
+
+	// Get filtered finders based on browsers parameter
+	targetFinders := finders
+	if len(browsers) > 0 {
+		targetFinders = make(map[string]CookieStoreFinder)
+		for _, browser := range browsers {
+			if finder, ok := finders[browser]; ok {
+				targetFinders[browser] = finder
+			}
+		}
+	}
+
 	var wg sync.WaitGroup
-	wg.Add(len(finders))
+	wg.Add(len(targetFinders))
 
 	c := make(chan []CookieStore)
 	done := make(chan struct{})
@@ -68,9 +108,7 @@ func FindAllCookieStores() []CookieStore {
 		close(done)
 	}()
 
-	muFinder.RLock()
-	defer muFinder.RUnlock()
-	for _, finder := range finders {
+	for _, finder := range targetFinders {
 		go func(finder CookieStoreFinder) {
 			defer wg.Done()
 			cookieStores, err := finder.FindCookieStores()

@@ -16,33 +16,36 @@ import (
 )
 
 var (
-	browser        string
 	profile        string
 	defaultProfile bool
 	showExpired    bool
 	domain         string
 	name           string
 	export         string
+	debug          bool
 )
 
 func main() {
-	// Setup zerolog
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
+	zerolog.SetGlobalLevel(zerolog.InfoLevel)
 
 	var rootCmd = &cobra.Command{
-		Use:   "kooky",
+		Use:   "kooky [browsers...]",
 		Short: "Extract cookies from browser cookie stores",
 		Long:  `Kooky is a CLI tool to extract and export cookies from various browser cookie stores.`,
 		Run:   runKooky,
+		Example: `  kooky                    # Extract from all browsers
+  kooky opera              # Extract from Opera only
+  kooky opera edge chrome  # Extract from multiple browsers`,
 	}
 
-	rootCmd.Flags().StringVarP(&browser, "browser", "b", "", "browser filter")
 	rootCmd.Flags().StringVarP(&profile, "profile", "p", "", "profile filter")
 	rootCmd.Flags().BoolVarP(&defaultProfile, "default-profile", "q", false, "only default profile(s)")
 	rootCmd.Flags().BoolVarP(&showExpired, "expired", "e", false, "show expired cookies")
 	rootCmd.Flags().StringVarP(&domain, "domain", "d", "", "cookie domain filter (partial)")
 	rootCmd.Flags().StringVarP(&name, "name", "n", "", "cookie name filter (exact)")
 	rootCmd.Flags().StringVarP(&export, "export", "o", "", "export cookies in netscape format")
+	rootCmd.Flags().BoolVar(&debug, "debug", false, "enable debug logging")
 
 	if err := rootCmd.Execute(); err != nil {
 		log.Fatal().Err(err).Msg("Failed to execute command")
@@ -50,12 +53,17 @@ func main() {
 }
 
 func runKooky(cmd *cobra.Command, args []string) {
-	cookieStores := kooky.FindAllCookieStores()
+	if debug {
+		zerolog.SetGlobalLevel(zerolog.DebugLevel)
+	}
 
-	var cookiesExport []*kooky.Cookie // for netscape export
+	// Use args as browser filters
+	cookieStores := kooky.FindAllCookieStores(args...)
 
-	var f io.Writer         // for netscape export
-	var w *tabwriter.Writer // for printing
+	var cookiesExport []*kooky.Cookie
+
+	var f io.Writer
+	var w *tabwriter.Writer
 	if len(export) > 0 {
 		if export == `-` {
 			f = os.Stdout
@@ -74,16 +82,10 @@ func runKooky(cmd *cobra.Command, args []string) {
 	for _, store := range cookieStores {
 		defer store.Close()
 
-		// Skip logging if file not found
-		log.Info().
+		log.Debug().
 			Str("browser", store.Browser()).
 			Str("profile", store.Profile()).
-			Msg("Read cookies")
-
-		// cookie store filters
-		if len(browser) > 0 && store.Browser() != browser {
-			continue
-		}
+			Msg("Read")
 		if len(profile) > 0 {
 			// Check both profile name and profile directory
 			profileMatches := store.Profile() == profile

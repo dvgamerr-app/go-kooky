@@ -8,10 +8,11 @@ import (
 	"github.com/dvgamerr-app/go-kooky/internal/chrome"
 	"github.com/dvgamerr-app/go-kooky/internal/cookies"
 	"github.com/dvgamerr-app/go-kooky/internal/utils"
+	"github.com/rs/zerolog/log"
 )
 
 func ReadCookies(filename string, filters ...kooky.Filter) ([]*kooky.Cookie, error) {
-	s, err := cookieStore(filename, filters...)
+	s, err := cookieStore(filename)
 	if err != nil {
 		return nil, err
 	}
@@ -31,7 +32,7 @@ func (s *operaCookieStore) ReadCookies(filters ...kooky.Filter) ([]*kooky.Cookie
 // the Opera browser. Set cookies are memory stored and do not modify any
 // browser files.
 func CookieJar(filename string, filters ...kooky.Filter) (http.CookieJar, error) {
-	j, err := cookieStore(filename, filters...)
+	j, err := cookieStore(filename)
 	if err != nil {
 		return nil, err
 	}
@@ -44,13 +45,14 @@ func CookieJar(filename string, filters ...kooky.Filter) (http.CookieJar, error)
 
 // CookieStore has to be closed with CookieStore.Close() after use.
 func CookieStore(filename string, filters ...kooky.Filter) (kooky.CookieStore, error) {
-	return cookieStore(filename, filters...)
+	return cookieStore(filename)
 }
 
-func cookieStore(filename string, filters ...kooky.Filter) (*cookies.CookieJar, error) {
+func cookieStore(filename string) (*cookies.CookieJar, error) {
 	var s operaCookieStore
 
 	f, typ, err := utils.DetectFileType(filename)
+	log.Info().Msgf("type: %s", typ)
 	if err != nil {
 		return nil, err
 	}

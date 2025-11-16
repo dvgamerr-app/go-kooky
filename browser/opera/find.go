@@ -5,6 +5,7 @@ import (
 
 	"github.com/dvgamerr-app/go-kooky"
 	"github.com/dvgamerr-app/go-kooky/internal/chrome"
+	"github.com/dvgamerr-app/go-kooky/internal/chrome/find"
 	"github.com/dvgamerr-app/go-kooky/internal/cookies"
 )
 
@@ -19,6 +20,7 @@ func init() {
 func (f *operaFinder) FindCookieStores() ([]kooky.CookieStore, error) {
 	var ret []kooky.CookieStore
 
+	// Opera Presto (old version)
 	roots, err := operaPrestoRoots()
 	if err != nil {
 		return nil, err
@@ -40,20 +42,24 @@ func (f *operaFinder) FindCookieStores() ([]kooky.CookieStore, error) {
 		)
 	}
 
-	roots, err = operaBlinkRoots()
+	// Opera Blink (Chromium-based) - use Chrome's find logic for profiles
+	files, err := find.FindCookieStoreFiles(operaBlinkRoots, `opera`)
 	if err != nil {
 		return nil, err
 	}
-	for _, root := range roots {
+	for _, file := range files {
 		ret = append(
 			ret,
 			&cookies.CookieJar{
 				CookieStore: &operaCookieStore{
 					CookieStore: &chrome.CookieStore{
 						DefaultCookieStore: cookies.DefaultCookieStore{
-							BrowserStr:           `opera`,
-							IsDefaultProfileBool: true,
-							FileNameStr:          filepath.Join(root, `Cookies`),
+							BrowserStr:           file.Browser,
+							ProfileStr:           file.Profile,
+							ProfileDirStr:        file.ProfileDir,
+							OSStr:                file.OS,
+							IsDefaultProfileBool: file.IsDefaultProfile,
+							FileNameStr:          file.Path,
 						},
 					},
 				},
