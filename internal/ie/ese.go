@@ -1,7 +1,6 @@
 package ie
 
 import (
-	"encoding/binary"
 	"encoding/hex"
 	"errors"
 	"strings"
@@ -10,7 +9,6 @@ import (
 	"github.com/dvgamerr-app/go-kooky/internal/timex"
 
 	"github.com/Velocidex/ordereddict"
-	"www.velocidex.com/golang/go-ese/parser"
 )
 
 func (s *ESECookieStore) ReadCookies(filters ...kooky.Filter) ([]*kooky.Cookie, error) {
@@ -198,56 +196,56 @@ func convertCookieEntry(entry *webCacheCookieEntry) (*kooky.Cookie, error) {
 	return cookie, nil
 }
 
-type webCacheContainer struct {
-	containerID      int    // ContainerId
-	setID            int    // SetId
-	flags            int    // Flags
-	size             int    // Size
-	limit            int    // Limit
-	lastScavengeTime int    // LastScavengeTime
-	entryMaxAge      int    // EntryMaxAge
-	lastAccessTime   int64  // LastAccessTime
-	name             string // Name
-	partitionID      string // PartitionId
-	directory        string // Directory
-}
+// type webCacheContainer struct {
+// 	containerID      int    // ContainerId
+// 	setID            int    // SetId
+// 	flags            int    // Flags
+// 	size             int    // Size
+// 	limit            int    // Limit
+// 	lastScavengeTime int    // LastScavengeTime
+// 	entryMaxAge      int    // EntryMaxAge
+// 	lastAccessTime   int64  // LastAccessTime
+// 	name             string // Name
+// 	partitionID      string // PartitionId
+// 	directory        string // Directory
+// }
 
-func getEdgeCookieDirectories(catalog *parser.Catalog) ([]webCacheContainer, error) {
-	var cookiesContainers []webCacheContainer
+// func getEdgeCookieDirectories(catalog *parser.Catalog) ([]webCacheContainer, error) {
+// 	var cookiesContainers []webCacheContainer
 
-	cbContainers := func(row *ordereddict.Dict) error {
-		var name, directory string
-		if n, ok := row.GetString(`Name`); ok {
-			name = strings.TrimRight(parser.UTF16BytesToUTF8([]byte(n), binary.LittleEndian), "\x00")
-		} else {
-			return nil
-		}
-		if name != `Cookies` {
-			return nil
-		}
+// 	cbContainers := func(row *ordereddict.Dict) error {
+// 		var name, directory string
+// 		if n, ok := row.GetString(`Name`); ok {
+// 			name = strings.TrimRight(parser.UTF16BytesToUTF8([]byte(n), binary.LittleEndian), "\x00")
+// 		} else {
+// 			return nil
+// 		}
+// 		if name != `Cookies` {
+// 			return nil
+// 		}
 
-		directory, ok := row.GetString(`Directory`)
-		if !ok {
-			return nil
-		}
+// 		directory, ok := row.GetString(`Directory`)
+// 		if !ok {
+// 			return nil
+// 		}
 
-		cookiesContainers = append(
-			cookiesContainers,
-			webCacheContainer{
-				name:      name,
-				directory: directory,
-			},
-		)
+// 		cookiesContainers = append(
+// 			cookiesContainers,
+// 			webCacheContainer{
+// 				name:      name,
+// 				directory: directory,
+// 			},
+// 		)
 
-		return nil
-	}
+// 		return nil
+// 	}
 
-	if err := catalog.DumpTable(`Containers`, cbContainers); err != nil {
-		return nil, err
-	}
+// 	if err := catalog.DumpTable(`Containers`, cbContainers); err != nil {
+// 		return nil, err
+// 	}
 
-	return cookiesContainers, nil
-}
+// 	return cookiesContainers, nil
+// }
 
 // TODO: create temporary copy of the ESE file on Windows - a service on Windows has a permanent lock on it, remove temporary copy in Close()
 

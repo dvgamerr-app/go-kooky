@@ -13,6 +13,7 @@ import (
 	"github.com/dvgamerr-app/go-kooky/internal/bytesx"
 	"github.com/dvgamerr-app/go-kooky/internal/cookies"
 	"github.com/dvgamerr-app/go-kooky/internal/timex"
+	"github.com/rs/zerolog/log"
 )
 
 // index.dat parser
@@ -48,7 +49,7 @@ func (s *IECacheCookieStore) ReadCookies(filters ...kooky.Filter) ([]*kooky.Cook
 	}
 	// TODO: use hash entries for domain search
 
-	var entries []*CacheCookieEntry
+	// var entries []*CacheCookieEntry
 	var textCookieStores []*TextCookieStore
 	// TODO: do url records always start at 0x5000?
 	urlSig := []byte(`URL `)
@@ -124,6 +125,9 @@ func (s *IECacheCookieStore) ReadCookies(filters ...kooky.Filter) ([]*kooky.Cook
 		}
 		entry.FormatVersion = formatVersion
 		offsetURLRecordFileName, err := bytesx.ReadOffSetInt64LE(s.File, "url record filename offset", offsetURLEntry, 60)
+		if err != nil {
+			return nil, err
+		}
 		fileName, err := bytesx.ReadString(s.File, "file name", offsetURLEntry, offsetURLRecordFileName)
 		if err != nil {
 			return nil, err
@@ -157,7 +161,8 @@ func (s *IECacheCookieStore) ReadCookies(filters ...kooky.Filter) ([]*kooky.Cook
 		}
 		entry.HitsCount = binary.LittleEndian.Uint32(hitsCount)
 
-		entries = append(entries, entry)
+		// entries = append(entries, entry)
+		log.Info().Any("entry", entry).Send()
 		textCookieStores = append(
 			textCookieStores,
 			&TextCookieStore{
