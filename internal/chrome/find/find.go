@@ -17,6 +17,20 @@ type chromeCookieStoreFile struct {
 	IsDefaultProfile bool
 }
 
+// appendCookieStoreFile checks if the given path exists and appends a chromeCookieStoreFile to files if so.
+func appendCookieStoreFile(files *[]*chromeCookieStoreFile, path, browser, profile, profileDir string, isDefault bool) {
+	if _, err := os.Stat(path); err == nil {
+		*files = append(*files, &chromeCookieStoreFile{
+			Browser:          browser,
+			Profile:          profile,
+			ProfileDir:       profileDir,
+			IsDefaultProfile: isDefault,
+			Path:             path,
+			OS:               runtime.GOOS,
+		})
+	}
+}
+
 // chromeRoots and chromiumRoots could be put into the github.com/kooky/browser/{chrome,chromium} packages.
 // It might be better though to keep those 2 together here as they are based on the same source.
 func FindChromeCookieStoreFiles() ([]*chromeCookieStoreFile, error) {
@@ -30,7 +44,9 @@ func FindCookieStoreFiles(rootsFunc func() ([]string, error), browserName string
 	if rootsFunc == nil {
 		return nil, errors.New(`passed roots function is nil`)
 	}
+
 	var files []*chromeCookieStoreFile
+
 	roots, err := rootsFunc()
 	if err != nil {
 		return nil, err
@@ -50,51 +66,23 @@ func FindCookieStoreFiles(rootsFunc func() ([]string, error), browserName string
 		}
 		if err := json.Unmarshal(localStateBytes, &localState); err != nil {
 			// fallback - json file exists, json structure unknown
-			files = append(
-				files,
-				[]*chromeCookieStoreFile{
-					{
-						Browser:          browserName,
-						Profile:          `Profile 1`,
-						ProfileDir:       `Default`,
-						IsDefaultProfile: true,
-						Path:             filepath.Join(root, `Default`, `Network`, `Cookies`), // Chrome 96
-						OS:               runtime.GOOS,
-					},
-					{
-						Browser:          browserName,
-						Profile:          `Profile 1`,
-						ProfileDir:       `Default`,
-						IsDefaultProfile: true,
-						Path:             filepath.Join(root, `Default`, `Cookies`),
-						OS:               runtime.GOOS,
-					},
-				}...,
-			)
+			cookiePathNetwork := filepath.Join(root, "Default", "Network", "Cookies")
+			cookiePath := filepath.Join(root, "Default", "Cookies")
+			appendCookieStoreFile(&files, cookiePathNetwork, browserName, "Profile 1", "Default", true)
+			appendCookieStoreFile(&files, cookiePath, browserName, "Profile 1", "Default", true)
 			continue
 
 		}
+
 		for profDir, profStr := range localState.Profile.InfoCache {
-			files = append(
-				files,
-				[]*chromeCookieStoreFile{
-					{
-						Browser:          browserName,
-						Profile:          profStr.Name,
-						ProfileDir:       profDir,
-						IsDefaultProfile: profStr.IsUsingDefaultName,
-						Path:             filepath.Join(root, profDir, `Network`, `Cookies`), // Chrome 96
-						OS:               runtime.GOOS,
-					}, {
-						Browser:          browserName,
-						Profile:          profStr.Name,
-						ProfileDir:       profDir,
-						IsDefaultProfile: profStr.IsUsingDefaultName,
-						Path:             filepath.Join(root, profDir, `Cookies`),
-						OS:               runtime.GOOS,
-					},
-				}...,
-			)
+			profileName := profStr.Name
+			if profileName == "" {
+				profileName = profDir
+			}
+			cookiePathNetwork := filepath.Join(root, profDir, `Network`, `Cookies`)
+			cookiePath := filepath.Join(root, profDir, `Cookies`)
+			appendCookieStoreFile(&files, cookiePathNetwork, browserName, profileName, profDir, profStr.IsUsingDefaultName)
+			appendCookieStoreFile(&files, cookiePath, browserName, profileName, profDir, profStr.IsUsingDefaultName)
 		}
 	}
 	return files, nil

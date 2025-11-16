@@ -1,6 +1,7 @@
 package opera
 
 import (
+	"os"
 	"path/filepath"
 
 	"github.com/dvgamerr-app/go-kooky"
@@ -26,20 +27,23 @@ func (f *operaFinder) FindCookieStores() ([]kooky.CookieStore, error) {
 		return nil, err
 	}
 	for _, root := range roots {
-		ret = append(
-			ret,
-			&cookies.CookieJar{
-				CookieStore: &operaCookieStore{
-					CookieStore: &operaPrestoCookieStore{
-						DefaultCookieStore: cookies.DefaultCookieStore{
-							BrowserStr:           `opera`,
-							IsDefaultProfileBool: true,
-							FileNameStr:          filepath.Join(root, `cookies4.dat`),
+		cookiePath := filepath.Join(root, `cookies4.dat`)
+		if _, err := os.Stat(cookiePath); err == nil {
+			ret = append(
+				ret,
+				&cookies.CookieJar{
+					CookieStore: &operaCookieStore{
+						CookieStore: &operaPrestoCookieStore{
+							DefaultCookieStore: cookies.DefaultCookieStore{
+								BrowserStr:           `opera`,
+								IsDefaultProfileBool: true,
+								FileNameStr:          cookiePath,
+							},
 						},
 					},
 				},
-			},
-		)
+			)
+		}
 	}
 
 	// Opera Blink (Chromium-based) - use Chrome's find logic for profiles
