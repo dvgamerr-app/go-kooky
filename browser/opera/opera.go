@@ -1,4 +1,4 @@
-package main
+package opera
 
 import (
 	"crypto/aes"
@@ -17,6 +17,17 @@ import (
 	"github.com/rs/zerolog/log"
 	_ "modernc.org/sqlite"
 )
+
+var TEMP_DIR string
+
+func init() {
+	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
+	TEMP_DIR = filepath.Join(os.TempDir(), ".kooky")
+	if err := os.MkdirAll(TEMP_DIR, 0755); err != nil {
+		// Handle error appropriately, e.g., log.Fatal(err) or return err
+		panic(err)
+	}
+}
 
 var (
 	dllcrypt32  = syscall.NewLazyDLL("Crypt32.dll")
@@ -70,12 +81,12 @@ func getAESKey(localStatePath string) ([]byte, error) {
 		return nil, err
 	}
 
-	var localState map[string]interface{}
+	var localState map[string]any
 	if err := json.Unmarshal(data, &localState); err != nil {
 		return nil, err
 	}
 
-	encryptedKey := localState["os_crypt"].(map[string]interface{})["encrypted_key"].(string)
+	encryptedKey := localState["os_crypt"].(map[string]any)["encrypted_key"].(string)
 	decodedKey, err := base64.StdEncoding.DecodeString(encryptedKey)
 	if err != nil {
 		return nil, err
@@ -159,11 +170,11 @@ func main() {
 		log.Fatal().Str("path", cookiesDB).Msg("Cookies file not found")
 	}
 
-	tempDB := filepath.Join(os.TempDir(), "Cookies_temp")
 	input, err := os.ReadFile(cookiesDB)
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to read cookies file")
 	}
+	tempDB := filepath.Join(TEMP_DIR, "opera")
 	err = os.WriteFile(tempDB, input, 0644)
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to create temp file")
@@ -254,15 +265,9 @@ func main() {
 				Int("value_len", len(decryptedValue)).
 				Msg("Cookie decrypted successfully")
 		}
-
 		cookie.Value = decryptedValue
 
-		fmt.Printf("\n========================================\n")
-		fmt.Printf("Host: %s\n", cookie.Host)
-		fmt.Printf("Name: %s\n", cookie.Name)
-		fmt.Printf("Value: %s\n", cookie.Value)
-		fmt.Printf("Path: %s\n", cookie.Path)
-		fmt.Printf("Secure: %v | HttpOnly: %v\n", cookie.IsSecure, cookie.IsHttpOnly)
+		log.Debug().Str("Value", cookie.Value).Send()
 
 		count++
 	}
