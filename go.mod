@@ -1,4 +1,4 @@
-module kooky
+module github.com/dvgamerr-app/go-kooky
 
 go 1.25
 

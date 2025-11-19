@@ -1,4 +1,4 @@
-package opera
+package main
 
 import (
 	"crypto/aes"
@@ -104,6 +104,36 @@ func getAESKey(localStatePath string) ([]byte, error) {
 	return key, nil
 }
 
+// GetProfiles อ่าน profile keys จาก Local State file
+func getProfiles(localStatePath string) ([]string, error) {
+	data, err := os.ReadFile(localStatePath)
+	if err != nil {
+		return nil, err
+	}
+
+	var localState map[string]any
+	if err := json.Unmarshal(data, &localState); err != nil {
+		return nil, err
+	}
+
+	profile, ok := localState["profile"].(map[string]any)
+	if !ok {
+		return nil, fmt.Errorf("profile section not found")
+	}
+
+	infoCache, ok := profile["info_cache"].(map[string]any)
+	if !ok {
+		return nil, fmt.Errorf("info_cache section not found")
+	}
+
+	var profiles []string
+	for key := range infoCache {
+		profiles = append(profiles, key)
+	}
+
+	return profiles, nil
+}
+
 // DecryptValue decrypt cookie value
 func decryptValue(encryptedValue []byte, key []byte) (string, error) {
 	if len(encryptedValue) == 0 {
@@ -165,6 +195,14 @@ func main() {
 	operaPath := filepath.Join(homeDir, "AppData", "Roaming", "Opera Software", "Opera Stable")
 	cookiesDB := filepath.Join(operaPath, "Default", "Network", "Cookies")
 	localStatePath := filepath.Join(operaPath, "Local State")
+
+	// Get profiles
+	profiles, err := getProfiles(localStatePath)
+	if err != nil {
+		log.Warn().Err(err).Msg("Failed to get profiles")
+	} else {
+		log.Info().Strs("profiles", profiles).Msg("Profiles found")
+	}
 
 	if _, err := os.Stat(cookiesDB); os.IsNotExist(err) {
 		log.Fatal().Str("path", cookiesDB).Msg("Cookies file not found")

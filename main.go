@@ -3,8 +3,7 @@ package main
 import (
 	"os"
 
-	"kooky/browser"
-
+	"github.com/dvgamerr-app/go-kooky/browser"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
@@ -14,21 +13,42 @@ func init() {
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 }
 
-func main() {
-	profiles, err := browser.GetProfiles("opera")
+func processBrowser(browserName string) error {
+	profiles, err := browser.GetProfiles(browserName)
 	if err != nil {
-		log.Fatal().Err(err).Msg("Failed to get profiles")
+		return err
 	}
 
 	log.Info().Strs("profiles", profiles).Msg("Available profiles")
-	cs := browser.NewCookieStore("opera", "Default")
+	for _, v := range profiles {
 
-	cookies, err := cs.GetCookies()
-	if err != nil {
-		log.Fatal().Err(err).Msg("Failed to get cookies")
+		cs := browser.NewCookieStore(browserName, v)
+
+		cookies, err := cs.GetCookies()
+		if err != nil {
+			return err
+		}
+
+		log.Info().Str("profile", v).Str("Browser", browserName).Int("Total:", len(cookies)).Msg("Cookie")
+		for _, cookie := range cookies[:1] {
+			value := cookie.Value
+			if len(cookie.Value) > 32 {
+				value = cookie.Value[:32] + "..."
+			}
+			log.Info().Str("Browser", browserName).Str("name", cookie.Name).Str("domain", cookie.Host).Str("value", value).Msg("Cookie")
+		}
 	}
+	return nil
+}
 
-	for _, cookie := range cookies {
-		log.Info().Str("host", cookie.Host).Str("name", cookie.Name).Str("value", cookie.Value).Msg("Cookie")
+func main() {
+	// err := processBrowser("opera")
+	// if err != nil {
+	// 	log.Fatal().Err(err).Msg("Failed to process browser")
+	// }
+
+	err := processBrowser("chrome")
+	if err != nil {
+		log.Fatal().Err(err).Msg("Failed to process browser")
 	}
 }
