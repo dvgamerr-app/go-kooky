@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"runtime"
 
+	jsoniter "github.com/json-iterator/go"
 	"github.com/rs/zerolog/log"
 	_ "modernc.org/sqlite"
 )
@@ -17,6 +18,8 @@ const (
 	Chromium BrowserType = iota
 	Firefox
 )
+
+var stdJson = jsoniter.ConfigCompatibleWithStandardLibrary
 
 type CookieStore struct {
 	Browser string
@@ -204,16 +207,50 @@ func GetProfiles(browser string) ([]string, error) {
 	default:
 		base = homeDir
 	}
-	profilesDir := filepath.Join(base, browserPath)
-	entries, err := os.ReadDir(profilesDir)
-	if err != nil {
-		return nil, err
-	}
-	var profiles []string
-	for _, entry := range entries {
-		if entry.IsDir() {
-			profiles = append(profiles, entry.Name())
+
+	switch btype {
+	case Chromium:
+		localStatePath := filepath.Join(base, browserPath, "Local State")
+		data, err := os.ReadFile(localStatePath)
+		if err != nil {
+			return nil, err
 		}
+
+		var localState map[string]any
+		if err := stdJson.Unmarshal(data, &localState); err != nil {
+			return nil, err
+		}
+
+		profile, ok := localState["profile"].(map[string]any)
+		if !ok {
+			return nil, fmt.Errorf("profile section not found")
+		}
+
+		infoCache, ok := profile["info_cache"].(map[string]any)
+		if !ok {
+			return nil, fmt.Errorf("info_cache section not found")
+		}
+
+		var profiles []string
+		for key := range infoCache {
+			profiles = append(profiles, key)
+		}
+
+		return profiles, nil
+	case Firefox:
+		profilesDir := filepath.Join(base, browserPath)
+		entries, err := os.ReadDir(profilesDir)
+		if err != nil {
+			return nil, err
+		}
+		var profiles []string
+		for _, entry := range entries {
+			if entry.IsDir() {
+				profiles = append(profiles, entry.Name())
+			}
+		}
+		return profiles, nil
 	}
-	return profiles, nil
+
+	return nil, fmt.Errorf("unsupported browser type")
 }
