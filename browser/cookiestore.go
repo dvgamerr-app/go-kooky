@@ -50,9 +50,7 @@ func getBrowserInfo(browser string) (browserPath string, btype BrowserType) {
 	}
 }
 
-func getCookiePaths(browser, profile string) (cookiePath, localStatePath string, btype BrowserType) {
-	browserPath, btype := getBrowserInfo(browser)
-
+func getBasePath(btype BrowserType) string {
 	homeDir, _ := os.UserHomeDir()
 	var base string
 	switch runtime.GOOS {
@@ -69,6 +67,13 @@ func getCookiePaths(browser, profile string) (cookiePath, localStatePath string,
 	default:
 		base = homeDir
 	}
+	return base
+}
+
+func getCookiePaths(browser, profile string) (cookiePath, localStatePath string, btype BrowserType) {
+	browserPath, btype := getBrowserInfo(browser)
+
+	base := getBasePath(btype)
 
 	switch btype {
 	case Chromium:
@@ -188,25 +193,7 @@ func GetProfiles(browser string) ([]string, error) {
 	if browserPath == "" {
 		return nil, fmt.Errorf("unsupported browser: %s", browser)
 	}
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		return nil, err
-	}
-	var base string
-	switch runtime.GOOS {
-	case "windows":
-		base = os.Getenv("APPDATA")
-	case "darwin":
-		base = filepath.Join(homeDir, "Library", "Application Support")
-	case "linux":
-		if btype == Firefox {
-			base = filepath.Join(homeDir, ".mozilla", "firefox")
-		} else {
-			base = filepath.Join(homeDir, ".config")
-		}
-	default:
-		base = homeDir
-	}
+	base := getBasePath(btype)
 
 	switch btype {
 	case Chromium:

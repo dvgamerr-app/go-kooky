@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"kookie/browser"
+	"kooky/browser"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
