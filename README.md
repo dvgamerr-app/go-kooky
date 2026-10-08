@@ -1,88 +1,109 @@
-# Opera Cookie Reader (Go)
+# go-kooky
 
-โปรแกรมสำหรับอ่าน cookies จาก Opera browser บน Windows โดยใช้ภาษา Go
+Experimental Go library and command-line scaffold for discovering browser profiles and reading
+their SQLite cookie stores. Chromium cookie decryption supports the legacy AES-GCM (`v10`/`v11`)
+scheme via Windows DPAPI; Firefox profile discovery reads `profiles.ini` directly.
 
-## คุณสมบัติ
+## Supported browser identifiers
 
-- อ่าน cookies จาก Opera Stable
-- Decrypt ค่า cookies ด้วย Windows DPAPI และ AES-GCM
-- รองรับ encryption แบบใหม่ (v10/v11) และแบบเก่า
-- บันทึกผลลัพธ์ลงไฟล์ `cookies.txt`
+- `firefox`
+- `opera` (Chromium-based; best effort, `v20` stores report `ErrAppBoundEncryption`)
+- `librewolf`, `waterfox`, `zen`, `floorp` (Firefox forks; profile roots follow each project's
+  documented default and are unverified against real installs)
 
-## ความต้องการ
+Firefox-family browsers do not encrypt `cookies.sqlite` and are the recommended source. Chrome, Edge
+and Brave are **not supported** and are rejected with `ErrAppBoundEncryption` (see Current
+limitations).
 
-- Windows OS
-- Go 1.21 หรือสูงกว่า
-- GCC compiler สำหรับ compile SQLite driver (ใช้ MinGW หรือ TDM-GCC)
+## Library use
 
-## การติดตั้ง
+```go
+cs := browser.NewCookieStore("firefox", profile)
+cookies, err := cs.CookiesForHost("act.hoyolab.com") // []*http.Cookie, domain-matched
+if errors.Is(err, browser.ErrAppBoundEncryption) {
+	// Chromium v20 store: switch to a Firefox-family browser.
+}
+```
 
-1. ติดตั้ง Go จาก https://golang.org/dl/
+`CookiesForHost` never returns the `[DECRYPT FAILED]` placeholder as a value; it returns the cause
+instead. Firefox's `-wal` sidecar is copied with the database so recent cookies are included.
 
-2. ติดตั้ง GCC (ถ้ายังไม่มี):
-   - ดาวน์โหลด TDM-GCC จาก https://jmeubank.github.io/tdm-gcc/
-   - หรือใช้ MinGW
+Platform-specific profile locations are resolved under `%LOCALAPPDATA%`/`%APPDATA%` on Windows,
+`~/Library/Application Support` on macOS, and `~/.config` or `~/.mozilla/firefox` on Linux.
 
-3. ดาวน์โหลด dependencies:
-```bash
+## Requirements
+
+- Go 1.26 or newer.
+- Access to the browser profile of the current OS user.
+- Close the target browser before reading cookies if its database is locked.
+
+The project uses the pure-Go `modernc.org/sqlite` driver, so GCC is not required.
+
+## Development commands
+
+Download dependencies and run the standard checks:
+
+```sh
 go mod download
+go test ./...
+go vet ./...
+go build ./...
 ```
 
-## วิธีใช้งาน
+The root program is currently an Opera-focused development harness:
 
-1. **ปิด Opera browser ก่อนรันโปรแกรม** (เพื่อไม่ให้ database ถูกล็อค)
-
-2. รันโปรแกรม:
-```bash
-go run opera_cookies.go
+```sh
+go run .
 ```
 
-หรือ compile ก่อน:
-```bash
-go build opera_cookies.go
-opera_cookies.exe
+The release CLI prints a per-profile cookie summary (counts only — never a cookie name, domain, or
+value) for one or more browsers, which doubles as a quick way to check this library's results
+against your own installed browsers:
+
+```sh
+go run ./cmd/kooky                    # summarize every supported browser
+go run ./cmd/kooky opera               # summarize Opera only
+go run ./cmd/kooky firefox opera       # summarize multiple browsers
+go run ./cmd/kooky --help
 ```
 
-3. ผลลัพธ์จะถูกบันทึกในไฟล์ `cookies.txt`
+## Package layout
 
-## โครงสร้างโค้ด
+- `browser/common.go` — shared cookie model, Local State parsing, and AES-GCM handling.
+- `browser/dpapi_windows.go` — Windows-only DPAPI integration.
+- `browser/dpapi_other.go` — non-Windows DPAPI capability boundary.
+- `browser/cookiestore.go` — profile discovery and SQLite cookie reads.
+- `browser/firefox/` — Firefox `profiles.ini` discovery, wired into `cookiestore.go`.
+- `cmd/kooky/` — release CLI scaffold.
 
-- **decrypt()** - ใช้ Windows DPAPI สำหรับ decrypt ข้อมูล
-- **getAESKey()** - อ่าน encryption key จาก Local State file
-- **decryptValue()** - decrypt cookie value (รองรับทั้ง AES-GCM และ DPAPI)
-- **main()** - อ่าน cookies จาก SQLite database และบันทึกผลลัพธ์
+## Security warning
 
-## คำเตือน
+Browser cookies can grant direct account access. Run this software only against profiles you own or
+are explicitly authorized to inspect. Avoid logging or sharing raw cookie values, protect any
+exports with restrictive permissions, and delete temporary/output data as soon as it is no longer
+needed.
 
-⚠️ **ข้อมูล cookies มีความละเอียดอ่อน**
-- ไฟล์ `cookies.txt` ที่สร้างขึ้นมีข้อมูลสำคัญ
-- กรุณาลบไฟล์ทิ้งหลังจากใช้งานเสร็จ
-- ใช้เพื่อการศึกษาและทดสอบเท่านั้น
+## Current limitations
 
-## ตัวอย่างผลลัพธ์
-
-```
-========================================
-Host: .example.com
-Name: session_id
-Value: abc123xyz789
-Path: /
-Secure: true | HttpOnly: true
-```
-
-## การแก้ปัญหา
-
-**ปัญหา: "ไม่พบไฟล์ Cookies"**
-- ตรวจสอบว่าติดตั้ง Opera แล้ว
-- ตรวจสอบ path: `%APPDATA%\Opera Software\Opera Stable\Cookies`
-
-**ปัญหา: "database is locked"**
-- ปิด Opera browser ก่อนรันโปรแกรม
-
-**ปัญหา: "gcc not found"**
-- ติดตั้ง GCC compiler (TDM-GCC หรือ MinGW)
-- เพิ่ม GCC ใน PATH environment variable
+- **Chrome, Edge, and Brave are not supported.** On current Windows releases those browsers
+  have moved cookie encryption to App-Bound Encryption (`v20`), which wraps the AES key behind each
+  browser's elevation service (COM) instead of plain DPAPI. This library only implements the legacy
+  `v10`/`v11` DPAPI-wrapped-key scheme, so `v20` cookies are reported as `ErrAppBoundEncryption`.
+  Confirmed empirically: on a real Windows profile, 100% of sampled Chrome, Edge, and Brave cookies
+  were `v20`-prefixed.
+- Windows is the only platform with DPAPI support; Chromium key handling on macOS/Linux is not yet
+  production-ready.
+- Opera's profile/cookie paths follow the same Chromium code path as Chrome/Edge/Brave. Verified
+  end-to-end against a synthetic fixture (`browser/opera_integration_test.go`, real Windows DPAPI,
+  no real browser data) since no Opera installation was available to test against directly. Whether
+  a given Opera release has also moved to `v20`/App-Bound Encryption depends on which Chromium
+  milestone that Opera release is based on — not verified either way.
+- The CLI prints decrypt-success/failure counts per profile but does not yet export full cookie
+  data (names, domains, values) to a file.
+- Browser discovery and cookie-schema compatibility need broader automated coverage.
+- Cookie databases are copied to a temporary directory before being opened; abnormal termination
+  can leave temporary files behind.
 
 ## License
 
-MIT License - ใช้เพื่อการศึกษาเท่านั้น
+MIT

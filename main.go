@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/dvgamerr-app/go-kooky/browser"
+	"github.com/dvgamerr-app/go-kooky/v2/browser"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
@@ -29,7 +29,7 @@ func processBrowser(browserName string) error {
 			return err
 		}
 
-		log.Info().Str("profile", v).Str("Browser", browserName).Int("Total:", len(cookies)).Msg("Cookie")
+		log.Info().Str("profile", v).Str("Browser", browserName).Int("Cookie Total", len(cookies)).Msg("Profile")
 		for _, cookie := range cookies[:1] {
 			value := cookie.Value
 			if len(cookie.Value) > 32 {
@@ -47,7 +47,7 @@ func main() {
 	// 	log.Fatal().Err(err).Msg("Failed to process browser")
 	// }
 
-	err := processBrowser("chrome")
+	err := processBrowser("opera")
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to process browser")
 	}
